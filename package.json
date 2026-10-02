@@ -1,0 +1,37 @@
+{
+  "name": "gameshelf",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/test.mjs",
+    "test:watch": "vitest",
+    "db:migrate": "node scripts/ensure-database.mjs && prisma migrate dev"
+  },
+  "dependencies": {
+    "@prisma/client": "6.12.0",
+    "next": "16.3.8",
+    "openai": "^7.27.0",
+    "prisma": "6.12.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.8",
+    "typescript": "^5",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "packageManager": "npm@11.13.0"
+}
