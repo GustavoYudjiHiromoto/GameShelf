@@ -7,10 +7,11 @@ export function CollectionGameItem({ game, collectionId }: { game: Game; collect
   const status = GAME_STATUSES.find((value) => value === game.status) ?? "BACKLOG";
   return (
     <article className="collection-game-item">
-      <Link className="collection-game-link" href={`/games/${game.id}`}>
+      <Link className="collection-game-link" href={`/games/${game.id}?collection=${encodeURIComponent(collectionId)}`}>
         <strong>{game.title}</strong>
-        <span>{game.genre} · {game.platform} · {gameStatusLabels[status]}</span>
+        <span>{game.platform} · {game.genre}</span>
       </Link>
+      <span className={`status-pill status-${status.toLowerCase().replaceAll("_", "-")}`}><span />{gameStatusLabels[status]}</span>
       <RemoveGameFromCollectionForm collectionId={collectionId} gameId={game.id} />
     </article>
   );

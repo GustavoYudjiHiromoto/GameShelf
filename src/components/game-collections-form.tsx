@@ -1,16 +1,19 @@
 import Link from "next/link";
 import type { listCollections } from "@/lib/collections/repository";
 import { SubmitButton } from "@/components/submit-button";
+import type { GameNavigationView } from "@/lib/games/collection-navigation";
 
 type Collections = Awaited<ReturnType<typeof listCollections>>;
 type FormAction = (formData: FormData) => Promise<void>;
 
-export function GameCollectionsForm({ collections, selectedIds, action, saved, error }: {
+export function GameCollectionsForm({ collections, selectedIds, action, saved, error, view, collectionId }: {
   collections: Collections;
   selectedIds: string[];
   action: FormAction;
   saved?: boolean;
   error?: boolean;
+  view: GameNavigationView;
+  collectionId?: string | null;
 }) {
   return (
     <section className="detail-card game-collections-card">
@@ -23,6 +26,8 @@ export function GameCollectionsForm({ collections, selectedIds, action, saved, e
         <p className="synopsis-empty">Crie uma coleção para organizar este jogo. <Link href="/collections/new">Criar coleção</Link></p>
       ) : (
         <form action={action} className="game-collections-form">
+          <input type="hidden" name="view" value={view} />
+          {collectionId && <input type="hidden" name="collection" value={collectionId} />}
           <fieldset>
             <legend className="sr-only">Selecione as coleções deste jogo</legend>
             {collections.map((collection) => (

@@ -3,11 +3,11 @@ import type { Game } from "@prisma/client";
 import { gameStatusLabels, GAME_STATUSES } from "@/lib/games/game-input";
 import { GameCover } from "@/components/game-cover";
 
-export function GameCard({ game }: { game: Game }) {
+export function GameCard({ game, view = "library" }: { game: Game; view?: "library" | "collection" }) {
   const status = GAME_STATUSES.find((value) => value === game.status) ?? "BACKLOG";
 
   return (
-    <Link className="game-card" href={`/games/${game.id}`}>
+    <Link className="game-card" href={`/games/${game.id}?view=${view}`}>
       <GameCover title={game.title} platform={game.platform} />
       <div className="card-body">
         <div className="card-title-row">

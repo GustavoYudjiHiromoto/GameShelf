@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { COLLECTION_HREF } from "@/lib/games/collection-navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function AppShell({ children, active = "library" }: { children: React.ReactNode; active?: "library" | "collection" | "customCollections" }) {
   return (
@@ -21,6 +22,7 @@ export function AppShell({ children, active = "library" }: { children: React.Rea
             <span className="nav-icon">▧</span><span>Coleções</span>
           </Link>
         </nav>
+        <ThemeToggle />
         <div className="sidebar-bottom">
           <div className="sidebar-note"><span className="note-orbit">✳</span><p>Um lugar para<br /><strong>suas próximas aventuras.</strong></p></div>
           <div className="sidebar-profile"><span className="profile-avatar">G</span><span><strong>Minha estante</strong><small>Biblioteca pessoal</small></span><span className="profile-menu">···</span></div>

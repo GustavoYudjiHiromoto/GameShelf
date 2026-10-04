@@ -9,15 +9,15 @@ type SearchParams = Promise<{ q?: string; platform?: string; genre?: string; sta
 
 export default async function Home({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
+  const navigation = getCollectionNavigation(params);
   const filters = {
     query: params.q,
     platform: params.platform,
     genre: params.genre,
-    status: GAME_STATUSES.find((status) => status === params.status),
+    status: GAME_STATUSES.find((status) => status === params.status) ?? (navigation.isCollection ? "BACKLOG" : undefined),
   };
-  const navigation = getCollectionNavigation(params);
   const [games, stats, options] = await Promise.all([listGames(filters), getGameStats(), getGameFilterOptions()]);
-  const hasFilters = Boolean(params.q || params.platform || params.genre || params.status);
+  const hasFilters = navigation.hasCustomFilters;
 
   return (
     <AppShell active={navigation.active}>
@@ -27,28 +27,35 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
       </header>
 
       <div className="page-content">
-        <section className="welcome-row">
+        {!navigation.isCollection && <section className="welcome-row">
           <div>
             <p className="eyebrow"><span className="eyebrow-line" /> SUA ESTANTE, DO SEU JEITO</p>
             <h1>Seus jogos,<br /><span>suas histórias.</span></h1>
             <p className="welcome-copy">Tudo o que você joga, jogou ou ainda vai descobrir — em um só lugar.</p>
           </div>
           <div className="shelf-illustration" aria-hidden="true"><span className="shelf-disc disc-one" /><span className="shelf-disc disc-two" /><span className="shelf-card">GS<span>✦</span></span><span className="shelf-star">✳</span></div>
-        </section>
+        </section>}
 
         {params.removido && <div className="notice notice-success" role="status">Jogo removido da sua biblioteca.</div>}
         {params.erro && <div className="notice notice-error" role="alert">Não foi possível encontrar esse jogo. Atualize a página e tente novamente.</div>}
 
-        <section className="stats-grid" aria-label="Resumo da biblioteca">
+        {navigation.isCollection && (
+          <section className="collection-view-intro">
+            <div><p className="eyebrow eyebrow-compact"><span className="eyebrow-line" /> SUA PRÓXIMA SESSÃO</p><h1>Minha coleção</h1><p>Jogos salvos como “Quero jogar”, prontos para a próxima aventura.</p></div>
+            <span className="collection-view-mark" aria-hidden="true">▤</span>
+          </section>
+        )}
+
+        {!navigation.isCollection && <section className="stats-grid" aria-label="Resumo da biblioteca">
           <div className="stat-card stat-total"><span className="stat-icon">▦</span><span className="stat-label">Na sua estante</span><strong>{stats.total.toString().padStart(2, "0")}</strong><small>jogos no total</small></div>
           <div className="stat-card"><span className="stat-icon stat-icon-green">◉</span><span className="stat-label">Em andamento</span><strong>{stats.playing.toString().padStart(2, "0")}</strong><small>boas aventuras</small></div>
           <div className="stat-card"><span className="stat-icon stat-icon-gold">✦</span><span className="stat-label">Finalizados</span><strong>{stats.completed.toString().padStart(2, "0")}</strong><small>histórias vividas</small></div>
-        </section>
+        </section>}
 
         <section className="collection-section">
           <div className="section-heading">
-            <div><p className="eyebrow eyebrow-compact">SUA COLEÇÃO</p><h2>{hasFilters ? "Resultados" : "Todos os jogos"}<span className="count-badge">{games.length}</span></h2></div>
-            <Link className="button button-primary" href="/games/new"><span className="button-plus">＋</span> Adicionar jogo</Link>
+            <div><p className="eyebrow eyebrow-compact">{navigation.isCollection ? "SEUS PRÓXIMOS JOGOS" : "SUA BIBLIOTECA"}</p><h2>{hasFilters ? "Resultados" : navigation.isCollection ? "Quero jogar" : "Todos os jogos"}<span className="count-badge">{games.length}</span></h2></div>
+            <Link className="button button-primary" href={`/games/new?view=${navigation.viewParam}`}><span className="button-plus">＋</span> Adicionar jogo</Link>
           </div>
 
           <form className="filter-bar" action="/" method="get">
@@ -56,19 +63,19 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
             <label className="search-box"><span className="search-icon" aria-hidden="true">⌕</span><span className="sr-only">Buscar jogo</span><input name="q" defaultValue={params.q} placeholder="Buscar na sua biblioteca…" /></label>
             <label className="filter-select"><span className="sr-only">Filtrar por plataforma</span><select name="platform" defaultValue={params.platform ?? ""}><option value="">Plataforma</option>{options.platforms.map((platform) => <option key={platform}>{platform}</option>)}</select></label>
             <label className="filter-select"><span className="sr-only">Filtrar por gênero</span><select name="genre" defaultValue={params.genre ?? ""}><option value="">Gênero</option>{options.genres.map((genre) => <option key={genre}>{genre}</option>)}</select></label>
-            <label className="filter-select"><span className="sr-only">Filtrar por status</span><select name="status" defaultValue={params.status ?? ""}><option value="">Status</option>{GAME_STATUSES.map((status) => <option key={status} value={status}>{gameStatusLabels[status]}</option>)}</select></label>
+            <label className="filter-select"><span className="sr-only">Filtrar por status</span><select name="status" defaultValue={params.status ?? (navigation.isCollection ? "BACKLOG" : "")}><option value="">Status</option>{GAME_STATUSES.map((status) => <option key={status} value={status}>{gameStatusLabels[status]}</option>)}</select></label>
             <button className="filter-submit" type="submit">Filtrar</button>
             {navigation.hasClearableFilters && <Link className="clear-filters" href={navigation.clearHref}>Limpar</Link>}
           </form>
 
           {games.length > 0 ? (
-            <div className="game-grid">{games.map((game) => <GameCard key={game.id} game={game} />)}</div>
+            <div className="game-grid">{games.map((game) => <GameCard key={game.id} game={game} view={navigation.viewParam} />)}</div>
           ) : (
             <div className="empty-state">
               <div className="empty-mark">✳</div>
-              <h3>{hasFilters ? "Nenhum jogo por aqui" : "Sua estante está esperando"}</h3>
-              <p>{hasFilters ? "Tente mudar os filtros ou buscar por outro título." : "Adicione seu primeiro jogo e comece a montar sua biblioteca pessoal."}</p>
-              {navigation.hasClearableFilters ? <Link className="button button-quiet" href={navigation.clearHref}>Limpar filtros</Link> : <Link className="button button-primary" href="/games/new">＋ Adicionar jogo</Link>}
+              <h3>{hasFilters ? "Nenhum jogo por aqui" : navigation.isCollection ? "Sua lista está vazia" : "Sua estante está esperando"}</h3>
+              <p>{hasFilters ? "Tente mudar os filtros ou buscar por outro título." : navigation.isCollection ? "Jogos com status “Quero jogar” aparecem nesta área." : "Adicione seu primeiro jogo e comece a montar sua biblioteca pessoal."}</p>
+              {navigation.hasClearableFilters ? <Link className="button button-quiet" href={navigation.clearHref}>Limpar filtros</Link> : <Link className="button button-primary" href={`/games/new?view=${navigation.viewParam}`}>＋ Adicionar jogo</Link>}
             </div>
           )}
         </section>

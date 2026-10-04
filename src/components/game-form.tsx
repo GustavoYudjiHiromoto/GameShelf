@@ -1,12 +1,21 @@
 import type { Game } from "@prisma/client";
 import { GAME_STATUSES, gameStatusLabels } from "@/lib/games/game-input";
+import type { GameNavigationView } from "@/lib/games/collection-navigation";
 import { SubmitButton } from "@/components/submit-button";
 
 type FormAction = (formData: FormData) => Promise<void>;
 
-export function GameForm({ action, game, error }: { action: FormAction; game?: Game; error?: string }) {
+export function GameForm({ action, game, error, view = "library", collectionId }: {
+  action: FormAction;
+  game?: Game;
+  error?: string;
+  view?: GameNavigationView;
+  collectionId?: string | null;
+}) {
   return (
     <form action={action} className="game-form">
+      <input type="hidden" name="view" value={view} />
+      {collectionId && <input type="hidden" name="collection" value={collectionId} />}
       {error && <p className="form-error" role="alert">Não foi possível salvar. Revise os campos e tente novamente.</p>}
 
       <label className="field field-wide">
@@ -44,7 +53,7 @@ export function GameForm({ action, game, error }: { action: FormAction; game?: G
       <div className="form-footer field-wide">
         <span className="required-note"><b>*</b> Campos obrigatórios</span>
         <div className="form-buttons">
-          <a className="button button-quiet" href={game ? `/games/${game.id}` : "/"}>Cancelar</a>
+          <a className="button button-quiet" href={game ? `/games/${game.id}?${collectionId ? `collection=${encodeURIComponent(collectionId)}` : `view=${view}`}` : `/?view=${view}`}>Cancelar</a>
           <SubmitButton pendingLabel="Salvando…">{game ? "Salvar alterações" : "Adicionar jogo"}</SubmitButton>
         </div>
       </div>

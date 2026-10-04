@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { parseCollectionForm, parseCollectionIds } from "@/lib/collections/collection-input";
+import { addGameNavigationQuery, getGameNavigationContext } from "@/lib/games/collection-navigation";
 import {
   createCollection,
   deleteCollection,
@@ -63,19 +64,24 @@ export async function deleteCollectionAction(formData: FormData) {
 }
 
 export async function updateGameCollectionsAction(gameId: string, formData: FormData) {
+  const context = getGameNavigationContext({
+    view: String(formData.get("view") ?? "library"),
+    collection: String(formData.get("collection") ?? ""),
+  });
   const parsed = parseCollectionIds(formData);
-  if (!parsed.success) redirect(`/games/${gameId}?colecoes=erro`);
+  if (!parsed.success) redirect(addGameNavigationQuery(`/games/${gameId}`, context, { colecoes: "erro" }));
 
   try {
     await setGameCollections(gameId, parsed.data);
   } catch (error) {
-    if (isCollectionNotFound(error)) redirect(`/games/${gameId}?colecoes=erro`);
+    if (isCollectionNotFound(error)) redirect(addGameNavigationQuery(`/games/${gameId}`, context, { colecoes: "erro" }));
     throw error;
   }
 
   revalidatePath(`/games/${gameId}`);
   revalidatePath("/collections");
-  redirect(`/games/${gameId}?colecoes=salvas`);
+  if (context.collectionId) revalidatePath(context.breadcrumbHref);
+  redirect(addGameNavigationQuery(`/games/${gameId}`, context, { colecoes: "salvas" }));
 }
 
 export async function removeGameFromCollectionAction(collectionId: string, gameId: string) {

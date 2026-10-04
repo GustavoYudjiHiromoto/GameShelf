@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COLLECTION_HREF, getCollectionNavigation } from "@/lib/games/collection-navigation";
+import { addGameNavigationQuery, COLLECTION_HREF, getCollectionNavigation, getGameNavigationContext } from "@/lib/games/collection-navigation";
 
 describe("navegação da coleção", () => {
   it("reconhece a visualização explícita de coleção independente do status", () => {
@@ -10,6 +10,7 @@ describe("navegação da coleção", () => {
       viewParam: "collection",
       clearHref: COLLECTION_HREF,
       hasClearableFilters: true,
+      hasCustomFilters: true,
     });
   });
 
@@ -38,5 +39,25 @@ describe("navegação da coleção", () => {
 
   it("não confunde um filtro de backlog na visão geral com a coleção", () => {
     expect(getCollectionNavigation({ view: "library", status: "BACKLOG" }).isCollection).toBe(false);
+  });
+
+  it("mantém contexto e breadcrumb da seção ao abrir detalhes do jogo", () => {
+    expect(getGameNavigationContext({ view: "collection" })).toMatchObject({
+      active: "collection",
+      breadcrumbLabel: "Minha coleção",
+      breadcrumbHref: COLLECTION_HREF,
+    });
+    expect(addGameNavigationQuery("/games/game-1", getGameNavigationContext({ view: "collection" })))
+      .toBe("/games/game-1?view=collection");
+  });
+
+  it("retorna de jogos abertos dentro de uma coleção personalizada para ela", () => {
+    const context = getGameNavigationContext({ collection: "collection-1" });
+    expect(context).toMatchObject({ active: "customCollections", breadcrumbLabel: "Coleções" });
+    expect(addGameNavigationQuery("/games/game-1", context)).toBe("/games/game-1?collection=collection-1");
+  });
+
+  it("ignora identificadores de coleção inválidos no contexto de navegação", () => {
+    expect(getGameNavigationContext({ collection: "../outside" }).active).toBe("library");
   });
 });
