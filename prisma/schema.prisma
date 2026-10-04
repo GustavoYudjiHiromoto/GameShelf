@@ -19,9 +19,21 @@ model Game {
   synopsisGeneratedAt DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  collections         Collection[]
 
   @@index([title])
   @@index([platform])
   @@index([genre])
   @@index([status])
+}
+
+model Collection {
+  id        String   @id @default(cuid())
+  name      String
+  nameKey   String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  games     Game[]
+
+  @@index([name])
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { COLLECTION_HREF } from "@/lib/games/collection-navigation";
 
-export function AppShell({ children, active = "library" }: { children: React.ReactNode; active?: "library" | "collection" }) {
+export function AppShell({ children, active = "library" }: { children: React.ReactNode; active?: "library" | "collection" | "customCollections" }) {
   return (
     <div className="app-frame">
       <aside className="sidebar">
@@ -10,11 +11,14 @@ export function AppShell({ children, active = "library" }: { children: React.Rea
         </Link>
         <div className="sidebar-section-label">BIBLIOTECA</div>
         <nav className="side-nav" aria-label="Navegação principal">
-          <Link href="/" className={`nav-link ${active === "library" ? "nav-link-active" : ""}`}>
+          <Link href="/?view=library" className={`nav-link ${active === "library" ? "nav-link-active" : ""}`}>
             <span className="nav-icon">▦</span><span>Visão geral</span>
           </Link>
-          <Link href="/?status=BACKLOG" className={`nav-link ${active === "collection" ? "nav-link-active" : ""}`}>
+          <Link href={COLLECTION_HREF} className={`nav-link ${active === "collection" ? "nav-link-active" : ""}`}>
             <span className="nav-icon">▤</span><span>Minha coleção</span>
+          </Link>
+          <Link href="/collections" className={`nav-link ${active === "customCollections" ? "nav-link-active" : ""}`}>
+            <span className="nav-icon">▧</span><span>Coleções</span>
           </Link>
         </nav>
         <div className="sidebar-bottom">

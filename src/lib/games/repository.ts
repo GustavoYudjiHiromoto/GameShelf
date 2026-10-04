@@ -25,6 +25,13 @@ export async function getGame(id: string) {
   return db.game.findUnique({ where: { id } });
 }
 
+export async function getGameWithCollections(id: string) {
+  return db.game.findUnique({
+    where: { id },
+    include: { collections: { select: { id: true, name: true } } },
+  });
+}
+
 export async function createGame(input: GameInput) {
   return db.game.create({ data: input });
 }

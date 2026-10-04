@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSynopsisService } from "@/lib/ai";
 import { getAIProviderConfig } from "@/lib/ai/provider-config";
+import { classifySynopsisError } from "@/lib/ai/synopsis-error";
 import { parseGameForm } from "@/lib/games/game-input";
 import { createGame, deleteGame, getGame, isGameNotFound, updateGame } from "@/lib/games/repository";
 
@@ -51,7 +52,14 @@ export async function generateSynopsisAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) redirect("/");
 
-  const aiConfig = getAIProviderConfig();
+  let aiConfig;
+  try {
+    aiConfig = getAIProviderConfig();
+  } catch (error) {
+    const category = classifySynopsisError(error);
+    redirect(`/games/${id}?sinopse=erro&tipo=${category}`);
+  }
+
   if (!aiConfig.isConfigured) {
     redirect(`/games/${id}?sinopse=configure-chave&provider=${aiConfig.provider}`);
   }
@@ -62,8 +70,9 @@ export async function generateSynopsisAction(formData: FormData) {
   try {
     const synopsis = await getSynopsisService().generate(game);
     await updateSynopsis(id, synopsis);
-  } catch {
-    redirect(`/games/${id}?sinopse=erro`);
+  } catch (error) {
+    const category = classifySynopsisError(error);
+    redirect(`/games/${id}?sinopse=erro&tipo=${category}`);
   }
 
   revalidatePath(`/games/${id}`);

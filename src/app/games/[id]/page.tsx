@@ -5,17 +5,31 @@ import { DeleteGameForm } from "@/components/delete-game-form";
 import { GameCover } from "@/components/game-cover";
 import { SubmitButton } from "@/components/submit-button";
 import { generateSynopsisAction } from "@/app/games/actions";
+import { updateGameCollectionsAction } from "@/app/collections/actions";
+import { GameCollectionsForm } from "@/components/game-collections-form";
+import { listCollections } from "@/lib/collections/repository";
 import { GAME_STATUSES, gameStatusLabels } from "@/lib/games/game-input";
-import { getGame } from "@/lib/games/repository";
+import { getGameWithCollections } from "@/lib/games/repository";
+import { isSynopsisErrorCategory, type SynopsisErrorCategory } from "@/lib/ai/synopsis-error";
+
+const synopsisErrorMessages: Record<SynopsisErrorCategory, string> = {
+  authentication: "A autenticação do provider de IA falhou. Confira a chave configurada para o provider selecionado.",
+  credits: "O provider de IA informou que não há créditos ou cota disponíveis. Verifique o saldo ou a cota da conta.",
+  connection: "Não foi possível conectar ao provider de IA. Verifique sua conexão e tente novamente.",
+  unexpected: "Ocorreu um erro inesperado ao gerar a sinopse. Tente novamente.",
+};
 
 export default async function GameDetailsPage({ params, searchParams }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ sinopse?: string; provider?: string }>;
+  searchParams: Promise<{ sinopse?: string; provider?: string; tipo?: string; colecoes?: string }>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const game = await getGame(id);
+  const [game, collections] = await Promise.all([getGameWithCollections(id), listCollections()]);
   if (!game) notFound();
   const status = GAME_STATUSES.find((value) => value === game.status) ?? "BACKLOG";
+  const synopsisErrorCategory = isSynopsisErrorCategory(query.tipo)
+    ? query.tipo
+    : "unexpected";
 
   return (
     <AppShell>
@@ -23,7 +37,7 @@ export default async function GameDetailsPage({ params, searchParams }: {
       <div className="detail-page-content">
         <Link className="back-link" href="/">← Voltar à biblioteca</Link>
         {query.sinopse === "configure-chave" && <div className="notice notice-error" role="alert">Configure {query.provider === "gemini" ? "GEMINI_API_KEY" : "OPENAI_API_KEY"} no arquivo .env.local para gerar sinopses.</div>}
-        {query.sinopse === "erro" && <div className="notice notice-error" role="alert">Não foi possível gerar a sinopse. Verifique sua chave e conexão e tente novamente.</div>}
+        {query.sinopse === "erro" && <div className="notice notice-error" role="alert">{synopsisErrorMessages[synopsisErrorCategory]}</div>}
         {query.sinopse === "gerada" && <div className="notice notice-success" role="status">Sinopse gerada e salva.</div>}
 
         <div className="detail-hero">
@@ -46,6 +60,7 @@ export default async function GameDetailsPage({ params, searchParams }: {
           </section>
 
           <section className="detail-card notes-card"><div className="detail-card-heading"><div><span className="detail-card-icon notes-icon">▤</span><div><h2>Suas observações</h2><p>Notas pessoais sobre o jogo.</p></div></div></div>{game.notes ? <p className="notes-text">{game.notes}</p> : <p className="synopsis-empty">Nenhuma observação adicionada.</p>}<Link href={`/games/${game.id}/edit`} className="inline-edit">Adicionar ou editar observações <span>↗</span></Link></section>
+          <GameCollectionsForm collections={collections} selectedIds={game.collections.map(({ id: collectionId }) => collectionId)} action={updateGameCollectionsAction.bind(null, game.id)} saved={query.colecoes === "salvas"} error={query.colecoes === "erro"} />
         </div>
         <footer className="page-footer"><span>GameShelf guarda sua biblioteca neste dispositivo.</span><span>GAMESHELF <b>·</b> 2026</span></footer>
       </div>

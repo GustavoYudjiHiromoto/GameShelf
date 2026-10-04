@@ -2,9 +2,10 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { GameCard } from "@/components/game-card";
 import { GAME_STATUSES, gameStatusLabels } from "@/lib/games/game-input";
+import { getCollectionNavigation } from "@/lib/games/collection-navigation";
 import { getGameFilterOptions, getGameStats, listGames } from "@/lib/games/repository";
 
-type SearchParams = Promise<{ q?: string; platform?: string; genre?: string; status?: string; removido?: string; erro?: string }>;
+type SearchParams = Promise<{ q?: string; platform?: string; genre?: string; status?: string; view?: string; removido?: string; erro?: string }>;
 
 export default async function Home({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -14,13 +15,14 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
     genre: params.genre,
     status: GAME_STATUSES.find((status) => status === params.status),
   };
+  const navigation = getCollectionNavigation(params);
   const [games, stats, options] = await Promise.all([listGames(filters), getGameStats(), getGameFilterOptions()]);
   const hasFilters = Boolean(params.q || params.platform || params.genre || params.status);
 
   return (
-    <AppShell active={params.status === "BACKLOG" ? "collection" : "library"}>
+    <AppShell active={navigation.active}>
       <header className="topbar">
-        <div className="breadcrumbs"><span>Biblioteca</span><span className="crumb-slash">/</span><strong>Visão geral</strong></div>
+        <div className="breadcrumbs"><span>Biblioteca</span><span className="crumb-slash">/</span><strong>{navigation.heading}</strong></div>
         <div className="topbar-right"><span className="local-badge"><span /> Modo local</span><span className="topbar-avatar">G</span></div>
       </header>
 
@@ -50,12 +52,13 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
           </div>
 
           <form className="filter-bar" action="/" method="get">
+            {navigation.viewParam && <input type="hidden" name="view" value={navigation.viewParam} />}
             <label className="search-box"><span className="search-icon" aria-hidden="true">⌕</span><span className="sr-only">Buscar jogo</span><input name="q" defaultValue={params.q} placeholder="Buscar na sua biblioteca…" /></label>
             <label className="filter-select"><span className="sr-only">Filtrar por plataforma</span><select name="platform" defaultValue={params.platform ?? ""}><option value="">Plataforma</option>{options.platforms.map((platform) => <option key={platform}>{platform}</option>)}</select></label>
             <label className="filter-select"><span className="sr-only">Filtrar por gênero</span><select name="genre" defaultValue={params.genre ?? ""}><option value="">Gênero</option>{options.genres.map((genre) => <option key={genre}>{genre}</option>)}</select></label>
             <label className="filter-select"><span className="sr-only">Filtrar por status</span><select name="status" defaultValue={params.status ?? ""}><option value="">Status</option>{GAME_STATUSES.map((status) => <option key={status} value={status}>{gameStatusLabels[status]}</option>)}</select></label>
             <button className="filter-submit" type="submit">Filtrar</button>
-            {hasFilters && <Link className="clear-filters" href="/">Limpar</Link>}
+            {navigation.hasClearableFilters && <Link className="clear-filters" href={navigation.clearHref}>Limpar</Link>}
           </form>
 
           {games.length > 0 ? (
@@ -65,7 +68,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
               <div className="empty-mark">✳</div>
               <h3>{hasFilters ? "Nenhum jogo por aqui" : "Sua estante está esperando"}</h3>
               <p>{hasFilters ? "Tente mudar os filtros ou buscar por outro título." : "Adicione seu primeiro jogo e comece a montar sua biblioteca pessoal."}</p>
-              {hasFilters ? <Link className="button button-quiet" href="/">Limpar filtros</Link> : <Link className="button button-primary" href="/games/new">＋ Adicionar primeiro jogo</Link>}
+              {navigation.hasClearableFilters ? <Link className="button button-quiet" href={navigation.clearHref}>Limpar filtros</Link> : <Link className="button button-primary" href="/games/new">＋ Adicionar jogo</Link>}
             </div>
           )}
         </section>
