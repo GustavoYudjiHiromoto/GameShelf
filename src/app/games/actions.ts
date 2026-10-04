@@ -75,7 +75,11 @@ export async function generateSynopsisAction(formData: FormData) {
   }
 
   if (!aiConfig.isConfigured) {
-    redirect(addGameNavigationQuery(`/games/${id}`, context, { sinopse: "configure-chave", provider: aiConfig.provider }));
+    redirect(addGameNavigationQuery(`/games/${id}`, context, {
+      sinopse: "configure-chave",
+      provider: aiConfig.provider,
+      ...(aiConfig.missingConfiguration ? { configuracao: aiConfig.missingConfiguration } : {}),
+    }));
   }
 
   const game = await getGame(id);

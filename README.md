@@ -47,9 +47,11 @@ O GameShelf é uma aplicação web local de usuário único para organizar uma b
    OPENAI_MODEL="gpt-5-mini"
    GEMINI_API_KEY=""
    GEMINI_MODEL="gemini-3.8-flash"
+   OPENROUTER_API_KEY=""
+   OPENROUTER_MODEL=""
    ```
 
-   O padrão é `AI_PROVIDER="openai"`. Para usar Gemini, defina `AI_PROVIDER="gemini"` e configure `GEMINI_API_KEY`. Para OpenAI, configure `OPENAI_API_KEY`. `GEMINI_MODEL` permite escolher o modelo Gemini; o padrão é `gemini-3.8-flash`. `OPENAI_MODEL` também pode ser definido; o padrão é `gpt-5-mini`.
+   O padrão é `AI_PROVIDER="openai"`. Para usar Gemini, defina `AI_PROVIDER="gemini"` e configure `GEMINI_API_KEY`. Para usar OpenRouter, defina `AI_PROVIDER="openrouter"` e configure `OPENROUTER_API_KEY` e `OPENROUTER_MODEL` com um modelo compatível escolhido no catálogo do OpenRouter. Para OpenAI, configure `OPENAI_API_KEY`. `GEMINI_MODEL` permite escolher o modelo Gemini; o padrão é `gemini-3.8-flash`. `OPENAI_MODEL` também pode ser definido; o padrão é `gpt-5-mini`.
 
    Configure somente a chave do provider selecionado. `.env` é ignorado pelo Git. Nunca coloque chaves em arquivos versionados ou no banco de dados; elas são lidas no servidor.
 
@@ -75,7 +77,7 @@ Execute os testes automatizados com:
 npm test
 ```
 
-Os testes usam um banco SQLite separado (`prisma/test.db`). Os testes dos adapters de IA são simulados: não fazem chamadas reais à OpenAI ou ao Gemini. O uso real dos providers depende de credenciais válidas, configuração correta e disponibilidade das respectivas APIs; portanto, não é validado pela suíte automatizada.
+Os testes usam um banco SQLite separado (`prisma/test.db`). Os testes dos adapters de IA são simulados: não fazem chamadas reais à OpenAI, Gemini ou OpenRouter. O uso real dos providers depende de credenciais válidas, configuração correta e disponibilidade das respectivas APIs; portanto, não é validado pela suíte automatizada.
 
 Outras verificações disponíveis:
 

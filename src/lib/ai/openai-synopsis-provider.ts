@@ -1,6 +1,7 @@
 import "server-only";
 import OpenAI from "openai";
 import type { GameSynopsisContext, SynopsisProvider } from "@/lib/ai/synopsis-provider";
+import { formatSynopsisContext, SYNOPSIS_INSTRUCTIONS } from "@/lib/ai/synopsis-prompt";
 
 export class OpenAISynopsisProvider implements SynopsisProvider {
   private readonly client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -8,9 +9,8 @@ export class OpenAISynopsisProvider implements SynopsisProvider {
   async generate(game: GameSynopsisContext) {
     const response = await this.client.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-5-mini",
-      instructions:
-        "Escreva uma sinopse curta, envolvente e factual de um jogo. Não invente detalhes específicos se não tiver certeza. Responda em português brasileiro, em um único parágrafo, sem mencionar que é uma IA.",
-      input: `Título: ${game.title}\nPlataforma: ${game.platform}\nGênero: ${game.genre}`,
+      instructions: SYNOPSIS_INSTRUCTIONS,
+      input: formatSynopsisContext(game),
       max_output_tokens: 180,
     });
 

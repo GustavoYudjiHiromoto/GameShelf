@@ -6,7 +6,7 @@ describe("configuração do provider de IA", () => {
     expect(getAIProviderConfig({})).toEqual({
       provider: "openai",
       isConfigured: false,
-      missingKey: "OPENAI_API_KEY",
+      missingConfiguration: "OPENAI_API_KEY",
       model: "gpt-5-mini",
     });
   });
@@ -19,7 +19,7 @@ describe("configuração do provider de IA", () => {
     })).toEqual({
       provider: "gemini",
       isConfigured: true,
-      missingKey: null,
+      missingConfiguration: null,
       model: "gemini-test-model",
     });
   });
@@ -28,13 +28,36 @@ describe("configuração do provider de IA", () => {
     expect(getAIProviderConfig({ AI_PROVIDER: "gemini" })).toEqual({
       provider: "gemini",
       isConfigured: false,
-      missingKey: "GEMINI_API_KEY",
+      missingConfiguration: "GEMINI_API_KEY",
       model: "gemini-3.8-flash",
     });
   });
 
   it("rejeita um provider desconhecido", () => {
     expect(() => getAIProviderConfig({ AI_PROVIDER: "unknown" }))
-      .toThrow("AI_PROVIDER deve ser 'openai' ou 'gemini'.");
+      .toThrow("AI_PROVIDER deve ser 'openai', 'gemini' ou 'openrouter'.");
+  });
+
+  it("seleciona OpenRouter com chave e modelo configurados sem retornar a chave", () => {
+    expect(getAIProviderConfig({
+      AI_PROVIDER: "openrouter",
+      OPENROUTER_API_KEY: "test-key",
+      OPENROUTER_MODEL: "provider/model",
+    })).toEqual({
+      provider: "openrouter",
+      isConfigured: true,
+      missingConfiguration: null,
+      model: "provider/model",
+    });
+  });
+
+  it("indica a chave ou o modelo OpenRouter ausente", () => {
+    expect(getAIProviderConfig({ AI_PROVIDER: "openrouter" })).toMatchObject({
+      isConfigured: false,
+      missingConfiguration: "OPENROUTER_API_KEY",
+      model: "",
+    });
+    expect(getAIProviderConfig({ AI_PROVIDER: "openrouter", OPENROUTER_API_KEY: "test-key" }))
+      .toMatchObject({ isConfigured: false, missingConfiguration: "OPENROUTER_MODEL" });
   });
 });

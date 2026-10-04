@@ -11,6 +11,7 @@ import { listCollections } from "@/lib/collections/repository";
 import { GAME_STATUSES, gameStatusLabels } from "@/lib/games/game-input";
 import { getGameWithCollections } from "@/lib/games/repository";
 import { isSynopsisErrorCategory, type SynopsisErrorCategory } from "@/lib/ai/synopsis-error";
+import type { AIMissingConfiguration } from "@/lib/ai/provider-config";
 import { addGameNavigationQuery, getGameNavigationContext } from "@/lib/games/collection-navigation";
 
 const synopsisErrorMessages: Record<SynopsisErrorCategory, string> = {
@@ -22,7 +23,7 @@ const synopsisErrorMessages: Record<SynopsisErrorCategory, string> = {
 
 export default async function GameDetailsPage({ params, searchParams }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ sinopse?: string; provider?: string; tipo?: string; colecoes?: string; view?: string; collection?: string }>;
+  searchParams: Promise<{ sinopse?: string; provider?: string; configuracao?: string; tipo?: string; colecoes?: string; view?: string; collection?: string }>;
 }) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const [game, collections] = await Promise.all([getGameWithCollections(id), listCollections()]);
@@ -32,13 +33,21 @@ export default async function GameDetailsPage({ params, searchParams }: {
   const synopsisErrorCategory = isSynopsisErrorCategory(query.tipo)
     ? query.tipo
     : "unexpected";
+  const missingConfiguration = ["OPENAI_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY", "OPENROUTER_MODEL"]
+    .includes(query.configuracao ?? "")
+    ? query.configuracao as AIMissingConfiguration
+    : query.provider === "gemini"
+      ? "GEMINI_API_KEY"
+      : query.provider === "openrouter"
+        ? "OPENROUTER_API_KEY"
+        : "OPENAI_API_KEY";
 
   return (
     <AppShell active={navigation.active}>
       <header className="topbar"><div className="breadcrumbs"><Link href={navigation.breadcrumbHref}>{navigation.breadcrumbLabel}</Link><span className="crumb-slash">/</span><strong>{game.title}</strong></div><span className="local-badge"><span /> Modo local</span></header>
       <div className="detail-page-content">
         <Link className="back-link" href={navigation.breadcrumbHref}>← Voltar para {navigation.breadcrumbLabel.toLowerCase()}</Link>
-        {query.sinopse === "configure-chave" && <div className="notice notice-error" role="alert">Configure {query.provider === "gemini" ? "GEMINI_API_KEY" : "OPENAI_API_KEY"} no arquivo .env.local para gerar sinopses.</div>}
+        {query.sinopse === "configure-chave" && <div className="notice notice-error" role="alert">Configure {missingConfiguration} no arquivo .env.local para gerar sinopses.</div>}
         {query.sinopse === "erro" && <div className="notice notice-error" role="alert">{synopsisErrorMessages[synopsisErrorCategory]}</div>}
         {query.sinopse === "gerada" && <div className="notice notice-success" role="status">Sinopse gerada e salva.</div>}
 

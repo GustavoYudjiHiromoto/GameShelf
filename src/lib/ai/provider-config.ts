@@ -1,9 +1,10 @@
-export type AIProviderName = "openai" | "gemini";
+export type AIProviderName = "openai" | "gemini" | "openrouter";
+export type AIMissingConfiguration = "OPENAI_API_KEY" | "GEMINI_API_KEY" | "OPENROUTER_API_KEY" | "OPENROUTER_MODEL";
 
 export type AIProviderConfig = {
   provider: AIProviderName;
   isConfigured: boolean;
-  missingKey: "OPENAI_API_KEY" | "GEMINI_API_KEY" | null;
+  missingConfiguration: AIMissingConfiguration | null;
   model: string;
 };
 
@@ -15,7 +16,7 @@ export function getAIProviderConfig(env: Record<string, string | undefined> = pr
     return {
       provider: selectedProvider,
       isConfigured,
-      missingKey: isConfigured ? null : "OPENAI_API_KEY",
+      missingConfiguration: isConfigured ? null : "OPENAI_API_KEY",
       model: env.OPENAI_MODEL || "gpt-5-mini",
     };
   }
@@ -25,10 +26,25 @@ export function getAIProviderConfig(env: Record<string, string | undefined> = pr
     return {
       provider: selectedProvider,
       isConfigured,
-      missingKey: isConfigured ? null : "GEMINI_API_KEY",
+      missingConfiguration: isConfigured ? null : "GEMINI_API_KEY",
       model: env.GEMINI_MODEL || "gemini-3.8-flash",
     };
   }
 
-  throw new Error("AI_PROVIDER deve ser 'openai' ou 'gemini'.");
+  if (selectedProvider === "openrouter") {
+    const missingConfiguration = !env.OPENROUTER_API_KEY
+      ? "OPENROUTER_API_KEY"
+      : !env.OPENROUTER_MODEL
+        ? "OPENROUTER_MODEL"
+        : null;
+
+    return {
+      provider: selectedProvider,
+      isConfigured: missingConfiguration === null,
+      missingConfiguration,
+      model: env.OPENROUTER_MODEL ?? "",
+    };
+  }
+
+  throw new Error("AI_PROVIDER deve ser 'openai', 'gemini' ou 'openrouter'.");
 }

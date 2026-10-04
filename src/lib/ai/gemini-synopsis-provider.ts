@@ -1,10 +1,9 @@
 import "server-only";
 import OpenAI from "openai";
 import type { GameSynopsisContext, SynopsisProvider } from "@/lib/ai/synopsis-provider";
+import { formatSynopsisContext, SYNOPSIS_INSTRUCTIONS } from "@/lib/ai/synopsis-prompt";
 
 const GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/";
-const SYNOPSIS_INSTRUCTIONS =
-  "Escreva uma sinopse curta, envolvente e factual de um jogo. Não invente detalhes específicos se não tiver certeza. Responda em português brasileiro, em um único parágrafo, sem mencionar que é uma IA.";
 
 export class GeminiSynopsisProvider implements SynopsisProvider {
   private readonly client = new OpenAI({
@@ -17,7 +16,7 @@ export class GeminiSynopsisProvider implements SynopsisProvider {
       model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
       messages: [
         { role: "system", content: SYNOPSIS_INSTRUCTIONS },
-        { role: "user", content: `Título: ${game.title}\nPlataforma: ${game.platform}\nGênero: ${game.genre}` },
+        { role: "user", content: formatSynopsisContext(game) },
       ],
       max_tokens: 180,
     });
